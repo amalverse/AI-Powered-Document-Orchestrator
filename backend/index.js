@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 
-import routes from './src/routes/index.js';
+import routes from './src/routes/routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

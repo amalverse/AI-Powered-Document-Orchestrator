@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 export const uploadDocument = async (req, res) => {
+  let filePath;
   try {
     // Extract the uploaded file and the user's analysis question from the request
     const file = req.file;
@@ -20,7 +21,7 @@ export const uploadDocument = async (req, res) => {
     }
 
     // Build the full file path to the temporarily stored upload
-    const filePath = path.join(__dirname, '../../', file.path);
+    filePath = path.join(__dirname, '../../', file.path);
     let extractedText = '';
 
     // Extract text from PDF files using pdf-parse library
@@ -34,14 +35,13 @@ export const uploadDocument = async (req, res) => {
         console.error('PDF Parsing Error:', pdfError);
         throw new Error(`Failed to parse PDF: ${pdfError.message}`);
       }
-    } 
+    }
     // For plain text files, just read them directly
     else if (file.mimetype === 'text/plain') {
       extractedText = fs.readFileSync(filePath, 'utf-8');
-    } 
+    }
     // Reject any other file type
     else {
-      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'Unsupported file type. Please upload a .pdf or .txt file.' });
     }
 
@@ -54,20 +54,24 @@ export const uploadDocument = async (req, res) => {
       throw new Error(`AI processing failed: ${aiError.message}`);
     }
 
-    // Clean up the temporary file after processing is done
-    try {
-      fs.unlinkSync(filePath);
-    } catch (unlinkError) {
-      console.error('File deletion error:', unlinkError);
-    }
-
     // Send back the extracted data and original text to the frontend
     res.json({ structuredData, text: extractedText });
   } catch (error) {
     console.error('Full Upload Process Error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'An error occurred while processing the file.',
       details: error.message
     });
+  } finally {
+    // Clean up the temporary file after processing is done (whether successful or failed)
+    if (filePath) {
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkError) {
+        console.error('File deletion error:', unlinkError);
+      }
+    }
   }
 };
