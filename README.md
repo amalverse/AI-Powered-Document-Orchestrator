@@ -4,35 +4,17 @@ An intelligent MERN stack application that extracts structured data from uploade
 
 ---
 
-## 🚀 How It Works
 
-### Four-Step Pipeline
+## 📊 Features
 
-```
-Step 1: Upload Document (PDF/TXT)
-        ↓
-Step 2: Groq AI extracts 5-8 key-value pairs based on user's query
-        ↓
-Step 3: User enters recipient email and triggers n8n workflow
-        ↓
-Step 4: n8n generates analytical email & sends via Gmail
-```
-
-### Data Flow
-
-```
-React Frontend
-    ↓ (uploads file + query)
-Express Backend
-    ↓ (parses PDF, calls Groq AI)
-Returns structured JSON
-    ↓ (user inputs email)
-HTTP POST to n8n Webhook
-    ↓ (n8n calls Groq , drafts & sends email)
-Gmail Sends Email Alert
-    ↓ (returns results to frontend)
-Display: Status, Answer, Email Preview
-```
+✅ **PDF & Text File Upload** — Drag & drop support  
+✅ **AI-Powered Extraction** — Groq Llama 3.3 for fast, accurate data extraction  
+✅ **Structured JSON Output** — 5-8 key-value pairs ranked by relevance  
+✅ **n8n Integration** — Webhook-based email automation  
+✅ **Gmail Alerts** — Automatic email drafting and sending  
+✅ **Real-time UI Updates** — React state management for instant feedback  
+✅ **Error Handling** — Comprehensive error messages for debugging  
+✅ **Responsive Design** — Mobile-friendly Tailwind CSS layout  
 
 ---
 
@@ -80,6 +62,82 @@ AI-Powered Document Orchestrator/
 └── README.md                          # This file
 
 ```
+
+---
+
+## 🚀 How It Works & Project Workflow
+
+### Architecture Overview
+
+1. **Frontend**: React 19, Vite, Tailwind CSS (User Interface)
+2. **Backend**: Node.js, Express, Multer, pdf-parse (API & File Processing)
+3. **AI Layer**: Groq API using Llama 3.3 70B (Data Extraction & Analysis)
+4. **Automation**: n8n Webhook & Node logic (Email construction and delivery via Gmail)
+
+### Step 1: Document Upload & Parsing
+
+**Objective**: The user uploads a file and gives a specific analysis query. The backend processes the upload and extracts the raw text.
+
+1. **User Action (Frontend)**: 
+   - The user selects a document (`.txt` or `.pdf`) and writes a query (e.g., "Extract invoice total and due date").
+   - `UploadSection.jsx` triggers a `multipart/form-data` POST request to the backend `/api/upload`.
+2. **File Handling (Backend - `routes/index.js` & `multer`)**:
+   - The `multer` middleware receives the file and temporarily saves it to the `backend/uploads/` directory.
+   - The request is then routed to `uploadController.js`.
+3. **Text Extraction (Backend - `uploadController.js`)**:
+   - For `.txt` files, the application reads the file directly using Node.js `fs`.
+   - For `.pdf` files, the application uses the `pdf-parse` library to extract raw text from the file buffer.
+   - Unsupported file types throw an error. The temporary file is queued for deletion.
+
+### Step 2: AI Data Extraction
+
+**Objective**: The raw text and query are sent to Groq AI to extract a structured JSON array of key-value pairs.
+
+1. **AI Processing (`aiService.js`)**:
+   - To avoid Groq AI token limits, the raw text is truncated to 25,000 characters if necessary.
+   - A strict prompt is built, containing the document text, the user query, and instructions to return a valid JSON array of 5 to 8 key-value pairs ranked by relevance.
+   - An HTTP POST request is sent to `https://api.groq.com/openai/v1/chat/completions` using the Llama 3.3 model.
+2. **Data cleanup (`aiService.js`)**:
+   - The AI response is stripped of potential markdown blocks (e.g., ` ```json `) and parsed into native JavaScript objects.
+3. **Response & Cleanup (`uploadController.js`)**:
+   - The original file in the `uploads/` folder is permanently deleted (`fs.unlinkSync`).
+   - The structured JSON and the raw text are sent back to the React frontend.
+4. **Data Rendering (`StructuredDataViewer.jsx`)**:
+   - The frontend receives the data and presents it neatly inside a structured UI table.
+
+### Step 3: Triggering Automation (n8n Webhook)
+
+**Objective**: The user provides an email address to send the analysis results and triggers the n8n automation process.
+
+1. **User Action (Frontend - `SendEmailSection.jsx`)**:
+   - The user inputs an email address and clicks "Send Email Alert".
+   - A POST request is fired to the backend `/api/send-email` containing the recipient email, the AI-extracted structured data, the raw text, and the original query.
+2. **Backend Proxy (`emailController.js`)**:
+   - The backend validates the payload constraints.
+   - It forwards the data by sending a POST request directly to the custom `N8N_WEBHOOK_URL` defined in the environment variables.
+
+### Step 4: The n8n Workflow & Email Delivery
+
+**Objective**: The n8n workflow receives the payload, structures an email using AI, and delivers it via Gmail.
+
+1. **Webhook Trigger Node (n8n)**:
+   - Catches the inbound POST request from the Node.js backend.
+2. **Groq AI Drafting Node (n8n)**:
+   - The workflow takes the original query and context data, passing it to an AI Node (Llama 3.3).
+   - The prompt instructs the AI to generate a detailed analytical message and a drafted HTML `email_body`.
+3. **Conditional Logic Node (n8n)**:
+   - Evaluates if the `email` key in the payload is populated.
+4. **Gmail Node (n8n)**:
+   - If an email exists, n8n connects to Gmail (using OAuth2 credentials) to send the drafted `email_body` directly to the recipient's inbox.
+5. **Webhook Response Node (n8n)**:
+   - The flow resolves by responding back to the original backend HTTP request (`emailController.js`), packaging the success status and the final analysis.
+
+### Step 5: Finalizing the UI state
+
+1. **Frontend Rendering (`AutomationResults.jsx` & `App.jsx`)**:
+   - The frontend receives the nested n8n response forwarded by the backend.
+   - `App.jsx` updates its state (`emailStatus`, `finalAnswer`, and `emailBody`).
+   - The user interface conditionally displays the "Automation Results," confirming execution details, the resulting AI answer, and a preview of the email sent.
 
 ---
 
@@ -232,19 +290,6 @@ curl -X POST http://localhost:5000/api/upload \
 ✅ `.env` files are in `.gitignore`
 ✅ Always regenerate API keys if accidentally exposed
 ✅ Use environment-specific URLs for dev/staging/production
-
----
-
-## 📊 Features
-
-✅ **PDF & Text File Upload** — Drag & drop support  
-✅ **AI-Powered Extraction** — Groq Llama 3.3 for fast, accurate data extraction  
-✅ **Structured JSON Output** — 5-8 key-value pairs ranked by relevance  
-✅ **n8n Integration** — Webhook-based email automation  
-✅ **Gmail Alerts** — Automatic email drafting and sending  
-✅ **Real-time UI Updates** — React state management for instant feedback  
-✅ **Error Handling** — Comprehensive error messages for debugging  
-✅ **Responsive Design** — Mobile-friendly Tailwind CSS layout  
 
 ---
 

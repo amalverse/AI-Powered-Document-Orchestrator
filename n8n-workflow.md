@@ -24,6 +24,10 @@ This workflow demonstrates how to:
 2. In your n8n dashboard, click "Import" or "New Workflow" > "Import from File"
 3. Select the downloaded JSON file
 
+Note: This workflow uses placeholder credentials. You will need to configure your own credentials for the Groq API and Gmail.
+
+Note: You can create n8n workflows from scratch from the n8n editor, or import this workflow from the provided JSON file. If you choose to create it from scratch, follow the node configuration steps below.
+
 ### 2. Configure Credentials
 
 #### Groq AI API
