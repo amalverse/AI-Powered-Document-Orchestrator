@@ -2,6 +2,8 @@
 
 An intelligent MERN stack application that extracts structured data from uploaded documents using **Groq AI** (Llama 3.3), triggers automated **n8n workflows**, and sends formatted **email alerts** to recipients — all in one seamless pipeline.
 
+<img width="1366" height="3041" alt="screencapture-ai-powered-document-orchestrator-vercel-app-2026-03-20-20_21_50" src="https://github.com/user-attachments/assets/9d2457e4-067b-4ec5-b2f0-989dadac5681" />
+
 ---
 
 

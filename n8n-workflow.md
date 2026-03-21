@@ -1,5 +1,7 @@
 # N8N AI Document Orchestrator Example Workflow
 
+<img width="1075" height="394" alt="Screenshot (7)" src="https://github.com/user-attachments/assets/e87b0a33-1375-48e5-aac9-c9e2e9111c0c" />
+
 This is an example n8n workflow file for an AI-powered document orchestrator that analyzes documents using Groq AI and optionally sends email alerts.
 
 ## Overview
