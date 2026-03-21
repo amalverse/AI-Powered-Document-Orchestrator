@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { extractStructuredData } from '../services/aiService.js';
 
+// Get the current file path and directory for handling file operations
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
